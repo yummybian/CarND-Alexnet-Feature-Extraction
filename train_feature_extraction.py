@@ -12,7 +12,7 @@ with open('./train.p', 'rb') as f:
     data = pickle.load(f)
 
 # TODO: Split data into training and validation sets.
-X_train, X_val, y_train, y_val = train_test_split(data['feature'],
+X_train, X_val, y_train, y_val = train_test_split(data['features'],
                                                   data['labels'],
                                                   test_size=0.33,
                                                   random_state=0)
@@ -53,7 +53,6 @@ training_operation = optimizer.minimize(loss_operation)
 # TODO: Train and evaluate the feature extraction model.
 correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
 accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-saver = tf.train.Saver()
 
 def evaluate(X_data, y_data):
     num_examples = len(X_data)
@@ -61,7 +60,7 @@ def evaluate(X_data, y_data):
     sess = tf.get_default_session()
     for offset in range(0, num_examples, batch_size):
         batch_x, batch_y = X_data[offset:offset+batch_size], y_data[offset:offset+batch_size]
-        accuracy = sess.run(accuracy_operation, feed_dict={x: batch_x, y: batch_y, keep_prob:1.0})
+        accuracy = sess.run(accuracy_operation, feed_dict={features: batch_x, labels: batch_y})
         total_accuracy += (accuracy * len(batch_x))
     return total_accuracy / num_examples
 
@@ -78,17 +77,14 @@ with tf.Session() as sess:
     print()
     for i in range(EPOCHS):
         startTime = datetime.now()
-        X_train, y_train = shuffle(X_train, y_train)
+        # X_train, y_train = shuffle(X_train, y_train)
         for offset in range(0, num_examples, BATCH_SIZE):
             end = offset + BATCH_SIZE
             batch_x, batch_y = X_train[offset:end], y_train[offset:end]
-            sess.run(training_operation, feed_dict={x: batch_x, y: batch_y, keep_prob: 0.5})
+            sess.run(training_operation, feed_dict={features: batch_x, labels: batch_y})
 
-        validation_accuracy = evaluate(X_valid, y_valid)
+        validation_accuracy = evaluate(X_val, y_val)
         print("EPOCH {} ...".format(i+1))
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
         print(str((datetime.now() - startTime).total_seconds()) + ' secs')
         print()
-
-
-
